@@ -1,4 +1,5 @@
 from lib2to3.pgen2 import token
+from telnetlib import DO
 from django.conf import settings
 from django.contrib.auth.models import AbstractUser
 from django.db import models
@@ -31,7 +32,7 @@ class Project(TimestampModel):
     title = models.CharField(max_length=128)
     description = models.TextField()
     code = models.CharField(max_length=64, unique=True, null=False)
-
+    creator = models.ForeignKey(User, on_delete=models.CASCADE, default=int(1))
     def __str__(self):
         return "{0} {1}".format(self.code, self.title)
 
@@ -43,6 +44,14 @@ class Issue(TimestampModel):
     EPIC = "EPIC"
     TYPES = [(BUG, BUG), (TASK, TASK), (STORY, STORY), (EPIC, EPIC)]
 
+    OPEN = "OPEN"
+    INPROGRESS = "INPROGRESS"
+    INREVIEW = "INREVIEW"
+    CODECOMPLETE = "CODECOMPLETE"
+    QATESTING = "QATESTING"
+    DONE = "DONE"
+    STATUS = [(OPEN,OPEN), (INPROGRESS, INPROGRESS), (INREVIEW, INREVIEW), (CODECOMPLETE, CODECOMPLETE), (QATESTING, QATESTING), (DONE, DONE)]
+
     title = models.CharField(max_length=128)
     description = models.TextField()
 
@@ -51,6 +60,8 @@ class Issue(TimestampModel):
     project = models.ForeignKey(
         Project, on_delete=models.CASCADE, related_name="issues", null=False
     )
-
+    reporter = models.ForeignKey(User, on_delete=models.CASCADE, related_name="reporter", null=False,default=int(1), editable=False)
+    assignee = models.ForeignKey(User, on_delete=models.CASCADE, related_name="assignee", default=int(1))
+    status = models.CharField(max_length=16, choices=STATUS, default=OPEN, null= False)
     def __str__(self):
         return "{0}-{1}".format(self.project.code, self.title)
