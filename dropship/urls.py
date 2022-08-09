@@ -13,9 +13,22 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
+from dropship import views
 from django.contrib import admin
-from django.urls import path
+from django.urls import include, path
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('auth/', include('djoser.urls')),
+    path('auth/', include('djoser.urls.authtoken')),
+    path('issues/',views.getAllIssues , name='issues'),
+    path('issues/<int:id>',views.getIssue, name='issue'),
+    path('issues/create', views.createIssue, name='createIssue'),
+    path('issues/<int:id>/update',views.updateIssue, name='updateIssue'),
+    path('issues/<int:id>/delete', views.deleteIssue, name='deleteIssue'),
+    path('projects/',views.getAllProjects , name='projects'),
+    path('projects/<int:id>',views.getProject, name='project'),
+    path('projects/create', views.createProject, name='createproject'),
+    path('projects/<int:id>/update',views.updateProject, name='updateproject'),
+    path('projects/<int:id>/delete', views.deleteProject, name='deleteproject'),
 ]

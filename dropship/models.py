@@ -1,6 +1,16 @@
+from lib2to3.pgen2 import token
+from django.conf import settings
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+from rest_framework.authtoken.models import Token
 
+class OwnedModel(models.Model):
+    owner= models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    class Meta:
+        abstract = True
+
+class Belonging(OwnedModel):
+    name= models.CharField(max_length=100)
 
 class TimestampModel(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
