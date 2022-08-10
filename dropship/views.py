@@ -1,5 +1,7 @@
 import json
+from multiprocessing import context
 from tokenize import Token
+from urllib.request import Request
 from django.db import router
 from django.forms import ValidationError
 from rest_framework import viewsets
@@ -43,13 +45,15 @@ def getAllIssues(request):
 def getIssue(request, id):
     issue = Issue.objects.filter(id=id)
     data=IssueSerializers(issue, many=True)
-    print(data)
     return Response(data.data)
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def createIssue(request):
-    newIssue = IssueSerializers(data = request.data)
+    context = {
+        "request": request,
+    }
+    newIssue = IssueSerializers(data = request.data, context = context)
     if newIssue.is_valid() :
         newIssue.save()
         return Response(newIssue.data)
@@ -59,7 +63,6 @@ def createIssue(request):
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def updateIssue(request,id):
-
     issue = Issue.objects.filter(id=id)
     data=IssueSerializers(instance=issue, data=request.data)
     if data.is_valid():
@@ -93,14 +96,17 @@ def getProject(request, id):
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def createProject(request):
-    newProject = ProjectSerializers(data = request.data)
+    context = {
+        "request": request,
+    }
+    newProject = ProjectSerializers(data = request.data, context = context)
     if newProject.is_valid() :
         newProject.save()
         return Response(newProject.data)
     else :
         return Response(status=status.HTTP_404_NOT_FOUND)
 
-@api_view(['PUT'])
+@api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def updateProject(request,id):
     project = Project.objects.filter(id=id)
@@ -116,4 +122,53 @@ def updateProject(request,id):
 def deleteProject(request,id):
     project = Project.objects.filter(id=id)
     project.delete()
+    return Response(status=status.HTTP_202_ACCEPTED)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def getAllIssuesUnderProject(request, pid):
+    issues = Issue.objects.filter(project=pid)
+    data=IssueSerializers(issues, many=True)
+    return Response(data.data)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def getIssueUnderProject(request, pid, iid):
+    issue = Issue.objects.filter(project=pid).filter(id=iid)
+    data=IssueSerializers(issue, many = True)
+    return Response(data.data)
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def createIssueUnderProject(request,pid):
+    #dat = request.data
+    request.data["project"]=pid
+    context = {
+        "request": request,
+    }
+    newIssue = IssueSerializers(data = request.data, context=context)
+    if newIssue.is_valid() :
+        newIssue.save()
+        return Response(newIssue.data)
+    else :
+        return Response(status=status.HTTP_404_NOT_FOUND)
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def updateIssueUnderProject(request, pid, iid):
+    issue = Issue.objects.filter(project=pid).filter(id=iid)
+    data=IssueSerializers(instance=issue, data=request.data)
+    if data.is_valid():
+        data.save()
+        return Response(data.data)
+    else:
+        print(data)
+        return Response(status=status.HTTP_404_NOT_FOUND)
+
+@api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
+def deleteIssueUnderProject(request, pid, iid):
+    issue = Issue.objects.filter(project=pid).filter(id=iid)
+    issue.delete()
     return Response(status=status.HTTP_202_ACCEPTED)
